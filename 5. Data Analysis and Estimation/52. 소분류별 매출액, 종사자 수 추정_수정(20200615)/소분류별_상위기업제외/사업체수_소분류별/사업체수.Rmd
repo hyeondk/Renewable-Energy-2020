@@ -1,0 +1,105 @@
+---
+title: "사업체수 추정"
+author: "김동현"
+output:
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 5, fig.height = 3)
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(doBy)
+```
+
+
+```{r, include = F}
+## 산업분류표 만들기
+산업분류 <- read_xlsx("C:/Users/mazy4/Desktop/소분류별_상위기업제외/data/신재생에너지 산업 특수분류체계 연계 KSIC(9차-10차)_E3_20200323.xlsx", skip = 1)
+산업분류 <- 산업분류[, -c(9, 10)] # 비고 항 제거
+산업분류 <- 산업분류[-197, ] # 마지막 행 제거
+names(산업분류) <- c("대","중","소","세","세세_9차","KSIC코드_9차","세세","KSIC코드")
+
+## NA 부분 모두 밀어서 이름 부여
+for(i in 1:(dim(산업분류)[1])){
+  if(is.na(산업분류$대[i])){
+    산업분류$대[i] <- 산업분류$대[i-1]}
+  if(is.na(산업분류$중[i])){
+    산업분류$중[i] <- 산업분류$중[i-1]}
+  if(is.na(산업분류$소[i])){
+    산업분류$소[i] <- 산업분류$소[i-1]}
+  if(is.na(산업분류$세[i])){
+    산업분류$세[i] <- 산업분류$세[i-1]}
+  if(is.na(산업분류$세세_9차[i])){
+    산업분류$세세_9차[i] <- 산업분류$세세_9차[i-1]}
+  if(is.na(산업분류$KSIC코드_9차[i])){
+    산업분류$KSIC코드_9차[i] <- 산업분류$KSIC코드_9차[i-1]}
+}
+
+write_file_name <- "산업분류표_대기업포함.csv"
+write_csv(산업분류,paste("./",write_file_name,sep=""))
+
+## 같은 소분류 내에 KSIC이 몇 번 중복 되는지?
+
+소분류별_KSIC_count <- 산업분류 %>% group_by(., 대, 중, 소, KSIC코드) %>% count()
+
+## 같은 KSIC이 몇 개의 서로 다른 소분류에 중복 되는지?
+
+KSIC_count_가중치 <- 소분류별_KSIC_count %>% group_by(., KSIC코드) %>% count %>% mutate(., 가중치_n역수_ = 1/n)
+
+소분류별_KSIC_count <- 소분류별_KSIC_count[,-5] %>% merge(.,KSIC_count_가중치, all.x=TRUE)
+```
+
+# 소분류 & 에너지원 매칭표
+
+```{r}
+소분류_에너지원_매칭표 <- read_xlsx("C:/Users/mazy4/Desktop/소분류별_상위기업제외/data/소분류_에너지원_매칭_200323.xlsx",sheet=1)
+소분류_에너지원_매칭표 %>% kable %>% kable_styling
+```
+
+# 사업체수 추정
+
+```{r, include = FALSE}
+사업체수추정표 <- read_xlsx("C:/Users/mazy4/Desktop/소분류별_상위기업제외/data/2019년도 전후방산업 스크린조사 完_191210_종사자 규모별(수정).xlsx", sheet=6, skip=3)[1:102, c(5, 6, 17)]
+colnames(사업체수추정표) <- c("KSIC코드","조사모집단수","적격률")
+소분류별_KSIC_count_사업체수 <- 소분류별_KSIC_count %>% merge(., 사업체수추정표, all.x=TRUE)
+소분류별_KSIC_count_사업체수$사업체수추정 <- 소분류별_KSIC_count_사업체수$가중치_n역수_ * 소분류별_KSIC_count_사업체수$조사모집단수 * 소분류별_KSIC_count_사업체수$적격률
+```
+
+## 세세분류별 결과 사업체수 추정 결과
+
+```{r}
+소분류별_KSIC_count_사업체수 %>% kable %>% kable_styling
+```
+
+## 세세분류별 결과를 소분류로 묶었을 때
+
+```{r}
+소분류별_추정사업체수 <- 소분류별_KSIC_count_사업체수 %>% group_by(., 대, 중, 소) %>% summarize(., 추정사업체수=sum(사업체수추정, na.rm=TRUE))
+소분류별_추정사업체수 %>% kable %>% kable_styling
+```
+
+## 소분류별 결과를 에너지원에 매칭시켜서 묶었을 때
+
+```{r}
+소분류별_추정사업체수_에너지원_매칭 <- 소분류_에너지원_매칭표 %>% merge(.,소분류별_추정사업체수, all.x=TRUE)
+소분류별_추정사업체수_에너지원_매칭$가중치적용추정사업체수 <- 소분류별_추정사업체수_에너지원_매칭$추정사업체수 * 소분류별_추정사업체수_에너지원_매칭$가중치
+```
+
+### 중분류별 & 에너지원별
+
+```{r}
+중분류별_에너지원별_추정사업체수 <- 소분류별_추정사업체수_에너지원_매칭 %>% group_by(., 대, 중, 에너지원) %>% summarize(., 추정사업체수 = sum(가중치적용추정사업체수, na.rm=TRUE))
+중분류별_에너지원별_추정사업체수 %>% kable %>% kable_styling
+```
+
+### 대분류별 & 에너지원별
+
+```{r}
+대분류별_에너지원별_추정사업체수 <- 소분류별_추정사업체수_에너지원_매칭 %>% group_by(., 대, 에너지원) %>% summarize(., 추정사업체수 = sum(가중치적용추정사업체수, na.rm=TRUE))
+대분류별_에너지원별_추정사업체수 %>% kable %>% kable_styling
+```
