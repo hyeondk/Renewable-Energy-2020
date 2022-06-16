@@ -1,6 +1,6 @@
 # Renewable-Energy-2020
-> Research Project
-> Title : Survey and Analysis of New and Renewable Energy Industry Statistics in 2020
+> Type : Research Project
+- Title : Survey and Analysis of New and Renewable Energy Industry Statistics in 2020
 - Periods : 2020.04.14. ~ 2021.01.09.
 
 ## Research Purpose
