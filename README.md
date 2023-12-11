@@ -4,11 +4,14 @@
 * Periods : 2020.04.14. ~ 2021.01.09.
 
 ## Research Purpose
-* Statistical survey and analysis for the scale of New and Renewable Energy Industry
+* Establishment of a Classification System for New and Renewable Energy Industries
+* Investigation and Analysis of the Front and Back Industries
 
 ## My Analysis Contents
-1. Data sampling design & Sampling
-2. Estimation about the results of a sample survey
+1. Design and implementation of sampling of company data participating in the renewable energy industry
+2. Estimate sales and number of employees for extracted companies
+  * Analysis techniques for sales : Weighted Simple Linear Regression, Robust Regression
+  * Analysis techniques for number of employees : Simple Linear Regression, Robust Regression
 
 ## Notes
 1. Data contains personal information and cannot be disclosed.
