@@ -10,8 +10,8 @@
 ## My Analysis Contents
 1. Design and implementation of sampling of company data participating in the renewable energy industry
 2. Estimate sales and number of employees for extracted companies
-  * Analysis techniques for sales : Weighted Simple Linear Regression, Robust Regression
-  * Analysis techniques for number of employees : Simple Linear Regression, Robust Regression
+* Analysis techniques for sales : Weighted Simple Linear Regression, Robust Regression
+* Analysis techniques for number of employees : Simple Linear Regression, Robust Regression
 
 ## Notes
 1. Data contains personal information and cannot be disclosed.
